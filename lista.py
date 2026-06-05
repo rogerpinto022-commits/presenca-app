@@ -1,11 +1,16 @@
-alunos  = []
-# Pergunta a quantidade
-qtde = int(input( "Quantos alunos temos hoje?"))
-# laço de repetiçao e armazenamento 
-for i in range(qtde):
-    nome = input(f"Digite o nome do Aluno {i + 1}")
-    alunos.append(nome)
-# Saída
-print("-- Lista de presença ---")
-for lista_nome in alunos:
-    print(f" - {lista_nome}")
+import streamlit as st
+
+st.title("Lista de Presença")
+
+qtde = st.number_input("Quantos alunos temos hoje?", min_value=1, step=1)
+
+alunos = []
+for i in range(int(qtde)):
+    nome = st.text_input(f"Digite o nome do Aluno {i+1}", key=i)
+    if nome:
+        alunos.append(nome)
+
+if st.button("Mostrar lista"):
+    st.subheader("--- Lista de presença ---")
+    for nome in alunos:
+        st.write(f"- {nome}")

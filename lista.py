@@ -1,9 +1,19 @@
 import streamlit as st
-import pandas as pd
+import gspread
+from datetime import datetime
+from google.oauth2.service_account import Credentials
 
 st.title("Lista de Presença")
 
-# guarda os nomes mesmo se recarregar a página
+# conecta no Google Sheets
+def conectar_sheets():
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=["https://www.googleapis.com/auth/spreadsheets"]
+    )
+    client = gspread.authorize(creds)
+    return client.open("Lista Presenca").sheet1
+
 if 'alunos' not in st.session_state:
     st.session_state.alunos = []
 
@@ -14,22 +24,20 @@ for i in range(int(qtde)):
     if nome and nome not in st.session_state.alunos:
         st.session_state.alunos.append(nome)
 
-if st.button("Mostrar lista"):
+if st.button("Salvar e Mostrar lista"):
     if st.session_state.alunos:
+        # salva no Google Sheets
+        sheet = conectar_sheets()
+        data = datetime.now().strftime("%d/%m/%Y %H:%M")
+        sheet.append_row([data] + st.session_state.alunos)
+
+        st.success("Lista salva no Google Sheets!")
         st.subheader("--- Lista de presença ---")
         for nome in st.session_state.alunos:
             st.write(f"- {nome}")
-        
-        # cria arquivo Excel pra baixar
-        df = pd.DataFrame({"Alunos": st.session_state.alunos})
-        csv = df.to_csv(index=False).encode('utf-8')
-        
-        st.download_button(
-            label="Baixar lista em Excel",
-            data=csv,
-            file_name="lista_presenca.csv",
-            mime="text/csv"
-        )
+
+        texto_copia = "\n".join(st.session_state.alunos)
+        st.text_area("Copiar lista:", texto_copia, height=200)
     else:
         st.warning("Digite pelo menos um nome")
 
